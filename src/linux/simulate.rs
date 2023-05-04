@@ -2,10 +2,45 @@ use crate::linux::common::{FALSE, TRUE};
 use crate::linux::keycodes::code_from_key;
 use crate::rdev::{Button, EventType, SimulateError};
 use std::convert::TryInto;
-use std::os::raw::c_int;
+use std::os::raw::{c_char, c_int, c_void};
 use std::ptr::null;
 use x11::xlib;
 use x11::xtest;
+
+type Window = c_int;
+type Xdo = *const c_void;
+const CURRENT_WINDOW: c_int = 0;
+use std::ptr;
+
+#[link(name = "xdo")]
+extern "C" {
+    fn xdo_new(display: *const c_char) -> Xdo;
+    fn xdo_move_mouse_relative(xdo: Xdo, x: c_int, y: c_int) -> c_int;
+    fn xdo_get_mouse_location2(
+        xdo: Xdo,
+        x: *mut c_int,
+        y: *mut c_int,
+        screen: *mut c_int,
+        window: *mut Window,
+    ) -> c_int;
+}
+
+fn mouse_location() -> (i32, i32) {
+    let mut x = 0;
+    let mut y = 0;
+    let mut unused_screen_index = 0;
+    let mut unused_window_index = CURRENT_WINDOW;
+    unsafe {
+        xdo_get_mouse_location2(
+            xdo_new(ptr::null()), // TODO save one
+            &mut x,
+            &mut y,
+            &mut unused_screen_index,
+            &mut unused_window_index,
+        )
+    };
+    (x, y)
+}
 
 unsafe fn send_native(event_type: &EventType, display: *mut xlib::Display) -> Option<()> {
     let res = match event_type {
@@ -54,22 +89,13 @@ unsafe fn send_native(event_type: &EventType, display: *mut xlib::Display) -> Op
         }
         EventType::MouseMoveRelative { x, y } => {
             //TODO: replace with clamp if it is stabalized
-            let x = if x.is_finite() {
-                x.min(c_int::max_value().into())
-                    .max(c_int::min_value().into())
-                    .round() as c_int
-            } else {
-                0
-            };
-            let y = if y.is_finite() {
-                y.min(c_int::max_value().into())
-                    .max(c_int::min_value().into())
-                    .round() as c_int
-            } else {
-                0
-            };
-            xtest::XTestFakeRelativeMotionEvent(display, -1, x, y, 0)
-            //     xlib::XWarpPointer(display, 0, root, 0, 0, 0, 0, *x as i32, *y as i32);
+            unsafe {
+                xdo_move_mouse_relative(
+                    xdo_new(ptr::null()), // TODO save one
+                    (*x as i32) as c_int,
+                    (*y as i32) as c_int,
+                )
+            }
         }
         EventType::Wheel { delta_x, delta_y } => {
             let code_x = if *delta_x > 0 { 7 } else { 6 };
