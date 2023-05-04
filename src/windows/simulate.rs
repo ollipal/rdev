@@ -162,3 +162,27 @@ pub fn simulate(event_type: &EventType) -> Result<(), SimulateError> {
         }
     }
 }
+
+pub fn mouse_move_relative(x: i32, y: i32, _return_start_position: bool) -> (i32, i32) {
+    let width = unsafe { GetSystemMetrics(SM_CXVIRTUALSCREEN) };
+    let height = unsafe { GetSystemMetrics(SM_CYVIRTUALSCREEN) };
+    if width == 0 || height == 0 {
+        return (0, 0);
+    }
+
+    let (current_x, current_y) = mouse_location();
+    let new_x = current_x + x;
+    let new_y = current_y + y;
+
+    if let Err(_e) = sim_mouse_event(
+        MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK,
+        0,
+        (new_x + 1) * 65535 / width,
+        (new_y + 1) * 65535 / height,
+    ) {
+        // Maybe log here?
+        return (current_x, current_y);
+    }
+
+    (current_x, current_y)
+}

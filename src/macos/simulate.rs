@@ -129,3 +129,27 @@ pub fn simulate(event_type: &EventType) -> Result<(), SimulateError> {
         }
     }
 }
+
+pub fn mouse_move_relative(x: i32, y: i32, _return_start_position: bool) -> (i32, i32) {
+    let start_position = match get_current_mouse_location() {
+        Some(location) => (location.x, location.y),
+        None => return (0, 0),
+    };
+    let new_x = start_position.0 + (x as f64);
+    let new_y = start_position.1 + (y as f64);
+
+    let pressed = pressed_buttons();
+
+    let event_type = if pressed & 1 > 0 {
+        CGEventType::LeftMouseDragged
+    } else if pressed & 2 > 0 {
+        CGEventType::RightMouseDragged
+    } else {
+        CGEventType::MouseMoved
+    };
+
+    let point = CGPoint { x: new_x, y: new_y };
+    CGEvent::new_mouse_event(source, event_type, point, CGMouseButton::Left).ok();
+
+    (start_position.0 as i32, start_position.1 as i32)
+}

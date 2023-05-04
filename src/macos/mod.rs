@@ -12,4 +12,4 @@ pub use crate::macos::display::display_size;
 pub use crate::macos::grab::grab;
 pub use crate::macos::keyboard::Keyboard;
 pub use crate::macos::listen::listen;
-pub use crate::macos::simulate::simulate;
+pub use crate::macos::simulate::{mouse_move_relative, simulate};

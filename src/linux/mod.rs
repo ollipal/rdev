@@ -15,4 +15,4 @@ pub use crate::linux::display::display_size;
 pub use crate::linux::grab::grab;
 pub use crate::linux::keyboard::Keyboard;
 pub use crate::linux::listen::listen;
-pub use crate::linux::simulate::simulate;
+pub use crate::linux::simulate::{mouse_move_relative, simulate};

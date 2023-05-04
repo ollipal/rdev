@@ -4,13 +4,13 @@ use crate::rdev::{Button, EventType, SimulateError};
 use std::convert::TryInto;
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr::null;
-use std::sync::Mutex;
 use x11::xlib;
 use x11::xtest;
 
 type Window = c_int;
 
 type Xdo = *const c_void;
+#[repr(C)]
 #[derive(Clone)]
 struct WrapperType(Xdo);
 
@@ -19,8 +19,8 @@ unsafe impl Sync for WrapperType {}
 impl Copy for WrapperType {}
 
 const CURRENT_WINDOW: c_int = 0;
-use std::ptr;
 use lazy_static::lazy_static;
+use std::ptr;
 
 #[link(name = "xdo")]
 extern "C" {
@@ -35,11 +35,8 @@ extern "C" {
     ) -> c_int;
 }
 
-
 lazy_static! {
-    static ref XDO: WrapperType = {
-        unsafe { xdo_new(ptr::null()) }
-    };
+    static ref XDO: WrapperType = unsafe { xdo_new(ptr::null()) };
 }
 
 fn mouse_location() -> (i32, i32) {
@@ -106,11 +103,7 @@ unsafe fn send_native(event_type: &EventType, display: *mut xlib::Display) -> Op
         }
         EventType::MouseMoveRelative { x, y } => {
             unsafe {
-                xdo_move_mouse_relative(
-                    *XDO,
-                    (*x as i32) as c_int,
-                    (*y as i32) as c_int,
-                );
+                xdo_move_mouse_relative(*XDO, (*x as i32) as c_int, (*y as i32) as c_int);
             }
             let result: c_int = 1;
             result
@@ -159,4 +152,15 @@ pub fn simulate(event_type: &EventType) -> Result<(), SimulateError> {
             }
         }
     }
+}
+
+pub fn mouse_move_relative(x: i32, y: i32, return_start_position: bool) -> (i32, i32) {
+    let mut start_position = (0, 0);
+    if return_start_position {
+        start_position = mouse_location();
+    }
+    unsafe {
+        xdo_move_mouse_relative(*XDO, x as c_int, y as c_int);
+    }
+    start_position
 }

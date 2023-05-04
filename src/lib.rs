@@ -232,21 +232,30 @@ mod macos;
 #[cfg(target_os = "macos")]
 pub use crate::macos::Keyboard;
 #[cfg(target_os = "macos")]
-use crate::macos::{display_size as _display_size, listen as _listen, simulate as _simulate};
+use crate::macos::{
+    display_size as _display_size, listen as _listen, mouse_move_relative as _mouse_move_relative,
+    simulate as _simulate,
+};
 
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "linux")]
 pub use crate::linux::Keyboard;
 #[cfg(target_os = "linux")]
-use crate::linux::{display_size as _display_size, listen as _listen, simulate as _simulate};
+use crate::linux::{
+    display_size as _display_size, listen as _listen, mouse_move_relative as _mouse_move_relative,
+    simulate as _simulate,
+};
 
 #[cfg(target_os = "windows")]
 mod windows;
 #[cfg(target_os = "windows")]
 pub use crate::windows::Keyboard;
 #[cfg(target_os = "windows")]
-use crate::windows::{display_size as _display_size, listen as _listen, simulate as _simulate};
+use crate::windows::{
+    display_size as _display_size, listen as _listen, mouse_move_relative as _mouse_move_relative,
+    simulate as _simulate,
+};
 
 /// Listening to global events. Caveat: On MacOS, you require the listen
 /// loop needs to be the primary app (no fork before) and need to have accessibility
@@ -411,4 +420,8 @@ mod tests {
         // assert_eq!(e, "é".to_string());
         // keyboard.add(&EventType::KeyRelease(Key::KeyE));
     }
+}
+
+pub fn mouse_move_relative(x: i32, y: i32, return_start_position: bool) -> (i32, i32) {
+    _mouse_move_relative(x, y, return_start_position)
 }
