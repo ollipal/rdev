@@ -8,6 +8,13 @@ use std::convert::TryInto;
 
 use crate::macos::keycodes::code_from_key;
 
+use objc::runtime::Class;
+
+fn pressed_buttons() -> usize {
+    let ns_event = Class::get("NSEvent").unwrap();
+    unsafe { msg_send![ns_event, pressedMouseButtons] }
+}
+
 unsafe fn convert_native_with_source(
     event_type: &EventType,
     source: CGEventSource,
@@ -52,9 +59,18 @@ unsafe fn convert_native_with_source(
             .ok()
         }
         EventType::MouseMove { x, y } => {
+            let pressed = pressed_buttons();
+
+            let event_type = if pressed & 1 > 0 {
+                CGEventType::LeftMouseDragged
+            } else if pressed & 2 > 0 {
+                CGEventType::RightMouseDragged
+            } else {
+                CGEventType::MouseMoved
+            };
+
             let point = CGPoint { x: (*x), y: (*y) };
-            CGEvent::new_mouse_event(source, CGEventType::MouseMoved, point, CGMouseButton::Left)
-                .ok()
+            CGEvent::new_mouse_event(source, event_type, point, CGMouseButton::Left).ok()
         }
         EventType::Wheel { delta_x, delta_y } => {
             let wheel_count = 2;
