@@ -72,6 +72,24 @@ unsafe fn convert_native_with_source(
             let point = CGPoint { x: (*x), y: (*y) };
             CGEvent::new_mouse_event(source, event_type, point, CGMouseButton::Left).ok()
         }
+        EventType::MouseMoveRelative { x, y } => {
+            let point = get_current_mouse_location()?;
+            let new_x = point.x + x;
+            let new_y = point.y + y;
+
+            let pressed = pressed_buttons();
+
+            let event_type = if pressed & 1 > 0 {
+                CGEventType::LeftMouseDragged
+            } else if pressed & 2 > 0 {
+                CGEventType::RightMouseDragged
+            } else {
+                CGEventType::MouseMoved
+            };
+
+            let point = CGPoint { x: new_x, y: new_y };
+            CGEvent::new_mouse_event(source, event_type, point, CGMouseButton::Left).ok()
+        }
         EventType::Wheel { delta_x, delta_y } => {
             let wheel_count = 2;
             CGEvent::new_scroll_event(

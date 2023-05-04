@@ -52,6 +52,25 @@ unsafe fn send_native(event_type: &EventType, display: *mut xlib::Display) -> Op
             xtest::XTestFakeMotionEvent(display, 0, x, y, 0)
             //     xlib::XWarpPointer(display, 0, root, 0, 0, 0, 0, *x as i32, *y as i32);
         }
+        EventType::MouseMoveRelative { x, y } => {
+            //TODO: replace with clamp if it is stabalized
+            let x = if x.is_finite() {
+                x.min(c_int::max_value().into())
+                    .max(c_int::min_value().into())
+                    .round() as c_int
+            } else {
+                0
+            };
+            let y = if y.is_finite() {
+                y.min(c_int::max_value().into())
+                    .max(c_int::min_value().into())
+                    .round() as c_int
+            } else {
+                0
+            };
+            xtest::XTestFakeRelativeMotionEvent(display, 0, x, y, 0)
+            //     xlib::XWarpPointer(display, 0, root, 0, 0, 0, 0, *x as i32, *y as i32);
+        }
         EventType::Wheel { delta_x, delta_y } => {
             let code_x = if *delta_x > 0 { 7 } else { 6 };
             let code_y = if *delta_y > 0 { 4 } else { 5 };

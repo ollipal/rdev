@@ -16,6 +16,19 @@ use winapi::um::winuser::{
 /// Not defined in win32 but define here for clarity
 static KEYEVENTF_KEYDOWN: DWORD = 0;
 
+use windows::Win32::Foundation::POINT;
+use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+
+fn mouse_location() -> (i32, i32) {
+    let mut point = POINT { x: 0, y: 0 };
+    let result = unsafe { GetCursorPos(&mut point) };
+    if result.as_bool() {
+        (point.x, point.y)
+    } else {
+        (0, 0)
+    }
+}
+
 fn sim_mouse_event(flags: DWORD, data: DWORD, dx: LONG, dy: LONG) -> Result<(), SimulateError> {
     let mut union: INPUT_u = unsafe { std::mem::zeroed() };
     let inner_union = unsafe { union.mi_mut() };
@@ -127,6 +140,24 @@ pub fn simulate(event_type: &EventType) -> Result<(), SimulateError> {
                 0,
                 (*x as i32 + 1) * 65535 / width,
                 (*y as i32 + 1) * 65535 / height,
+            )
+        }
+        EventType::MouseMoveRelative { x, y } => {
+            let width = unsafe { GetSystemMetrics(SM_CXVIRTUALSCREEN) };
+            let height = unsafe { GetSystemMetrics(SM_CYVIRTUALSCREEN) };
+            if width == 0 || height == 0 {
+                return Err(SimulateError);
+            }
+
+            let (current_x, current_y) = mouse_location();
+            let new_x = current_x + (*x as i32);
+            let new_y = current_y + (*y as i32);
+
+            sim_mouse_event(
+                MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK,
+                0,
+                (new_x + 1) * 65535 / width,
+                (new_y + 1) * 65535 / height,
             )
         }
     }
