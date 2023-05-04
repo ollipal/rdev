@@ -99,10 +99,10 @@ unsafe fn get_current_mouse_location() -> Option<CGPoint> {
 }
 
 // This allows sharing the same source
-unsafe fn get_current_mouse_location_from_source(source: &CGEventSource) -> Option<CGPoint> {
+/* unsafe fn get_current_mouse_location_from_source(source: &CGEventSource) -> Option<CGPoint> {
     let event = CGEvent::new(source.clone()).ok()?;
     Some(event.location())
-}
+} */
 
 #[link(name = "Cocoa", kind = "framework")]
 extern "C" {}
@@ -124,7 +124,7 @@ pub fn mouse_move_relative(x: i32, y: i32, _return_start_position: bool) -> (i32
             Ok(source) => source,
             Err(_e) => return (0, 0),
         };
-        let start_position = match get_current_mouse_location_from_source(&source) {
+        let start_position = match get_current_mouse_location() {
             Some(location) => (location.x, location.y),
             None => return (0, 0),
         };
