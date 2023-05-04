@@ -142,24 +142,6 @@ pub fn simulate(event_type: &EventType) -> Result<(), SimulateError> {
                 (*y as i32 + 1) * 65535 / height,
             )
         }
-        EventType::MouseMoveRelative { x, y } => {
-            let width = unsafe { GetSystemMetrics(SM_CXVIRTUALSCREEN) };
-            let height = unsafe { GetSystemMetrics(SM_CYVIRTUALSCREEN) };
-            if width == 0 || height == 0 {
-                return Err(SimulateError);
-            }
-
-            let (current_x, current_y) = mouse_location();
-            let new_x = current_x + (*x as i32);
-            let new_y = current_y + (*y as i32);
-
-            sim_mouse_event(
-                MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK,
-                0,
-                (new_x + 1) * 65535 / width,
-                (new_y + 1) * 65535 / height,
-            )
-        }
     }
 }
 

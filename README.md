@@ -128,10 +128,6 @@ pub enum EventType {
         x: f64,
         y: f64,
     },
-    MouseMoveRelative {
-        x: f64,
-        y: f64,
-    },
     /// Note: On Linux, there is no actual delta the actual values are ignored for delta_x
     /// and we only look at the sign of delta_y to simulate wheelup or wheeldown.
     Wheel {

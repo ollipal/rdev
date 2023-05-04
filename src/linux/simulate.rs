@@ -101,13 +101,6 @@ unsafe fn send_native(event_type: &EventType, display: *mut xlib::Display) -> Op
             xtest::XTestFakeMotionEvent(display, 0, x, y, 0)
             //     xlib::XWarpPointer(display, 0, root, 0, 0, 0, 0, *x as i32, *y as i32);
         }
-        EventType::MouseMoveRelative { x, y } => {
-            unsafe {
-                xdo_move_mouse_relative(*XDO, (*x as i32) as c_int, (*y as i32) as c_int);
-            }
-            let result: c_int = 1;
-            result
-        }
         EventType::Wheel { delta_x, delta_y } => {
             let code_x = if *delta_x > 0 { 7 } else { 6 };
             let code_y = if *delta_y > 0 { 4 } else { 5 };

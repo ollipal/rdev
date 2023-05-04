@@ -241,10 +241,6 @@ pub enum EventType {
         x: f64,
         y: f64,
     },
-    MouseMoveRelative {
-        x: f64,
-        y: f64,
-    },
     /// `delta_y` represents vertical scroll and `delta_x` represents horizontal scroll.
     /// Positive values correspond to scrolling up or right and negative values
     /// correspond to scrolling down or left
