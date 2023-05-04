@@ -68,7 +68,7 @@ unsafe fn send_native(event_type: &EventType, display: *mut xlib::Display) -> Op
             } else {
                 0
             };
-            xtest::XTestFakeRelativeMotionEvent(display, 0, x, y, 0)
+            xtest::XTestFakeRelativeMotionEvent(display, -1, x, y, 0)
             //     xlib::XWarpPointer(display, 0, root, 0, 0, 0, 0, *x as i32, *y as i32);
         }
         EventType::Wheel { delta_x, delta_y } => {
