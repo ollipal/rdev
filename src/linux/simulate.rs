@@ -160,8 +160,8 @@ pub fn mouse_move_relative(x: i32, y: i32, return_start_position: bool) -> (i32,
 
         xtest::XTestFakeRelativeMotionEvent(dpy, 0, x as c_int, y as c_int, 0);
         xlib::XFlush(dpy);
-        xlib::XSync(dpy, 0);
-        xlib::XCloseDisplay(dpy);
+        //xlib::XSync(dpy, 0);
+        //xlib::XCloseDisplay(dpy);
 
         //xdo_move_mouse_relative(*XDO, x as c_int, y as c_int);
     }
