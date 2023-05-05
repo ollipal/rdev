@@ -72,6 +72,24 @@ unsafe fn convert_native_with_source(
             let point = CGPoint { x: (*x), y: (*y) };
             CGEvent::new_mouse_event(source, event_type, point, CGMouseButton::Left).ok()
         }
+        /* EventType::MouseMoveRelative { x, y } => {
+            let point = get_current_mouse_location()?;
+            let new_x = point.x + x;
+            let new_y = point.y + y;
+
+            let pressed = pressed_buttons();
+
+            let event_type = if pressed & 1 > 0 {
+                CGEventType::LeftMouseDragged
+            } else if pressed & 2 > 0 {
+                CGEventType::RightMouseDragged
+            } else {
+                CGEventType::MouseMoved
+            };
+
+            let point = CGPoint { x: new_x, y: new_y };
+            CGEvent::new_mouse_event(source, event_type, point, CGMouseButton::Left).ok()
+        } */
         EventType::Wheel { delta_x, delta_y } => {
             let wheel_count = 2;
             CGEvent::new_scroll_event(
@@ -118,32 +136,50 @@ pub fn simulate(event_type: &EventType) -> Result<(), SimulateError> {
     }
 }
 
+unsafe fn convert_native2(x: i32, y: i32) -> (Option<CGEvent>, i32, i32) {
+    let source = match CGEventSource::new(CGEventSourceStateID::HIDSystemState).ok() {
+        Some(source) => source,
+        None => return (None, 0, 0),
+    };
+    _mouse_move_relative(source, x, y)
+}
+
+unsafe fn _mouse_move_relative(
+    source: CGEventSource,
+    x: i32,
+    y: i32,
+) -> (Option<CGEvent>, i32, i32) {
+    let start_point = match get_current_mouse_location() {
+        Some(point) => point,
+        None => return (None, 0, 0),
+    };
+    let new_x = start_point.x + (x as f64);
+    let new_y = start_point.y + (y as f64);
+
+    let pressed = pressed_buttons();
+
+    let event_type = if pressed & 1 > 0 {
+        CGEventType::LeftMouseDragged
+    } else if pressed & 2 > 0 {
+        CGEventType::RightMouseDragged
+    } else {
+        CGEventType::MouseMoved
+    };
+
+    let point = CGPoint { x: new_x, y: new_y };
+    (
+        CGEvent::new_mouse_event(source, event_type, point, CGMouseButton::Left).ok(),
+        start_point.x as i32,
+        start_point.y as i32,
+    )
+}
+
 pub fn mouse_move_relative(x: i32, y: i32, _return_start_position: bool) -> (i32, i32) {
     unsafe {
-        let source = match CGEventSource::new(CGEventSourceStateID::HIDSystemState) {
-            Ok(source) => source,
-            Err(_e) => return (0, 0),
-        };
-        let start_position = match get_current_mouse_location() {
-            Some(location) => (location.x, location.y),
-            None => return (0, 0),
-        };
-        let new_x = start_position.0 + (x as f64);
-        let new_y = start_position.1 + (y as f64);
-
-        let pressed = pressed_buttons();
-
-        let event_type = if pressed & 1 > 0 {
-            CGEventType::LeftMouseDragged
-        } else if pressed & 2 > 0 {
-            CGEventType::RightMouseDragged
-        } else {
-            CGEventType::MouseMoved
-        };
-
-        let point = CGPoint { x: new_x, y: new_y };
-        CGEvent::new_mouse_event(source, event_type, point, CGMouseButton::Left).ok();
-
-        (start_position.0 as i32, start_position.1 as i32)
+        let (cg_event_opt, start_x, start_y) = convert_native2(x, y);
+        if let Some(cg_event) = cg_event_opt {
+            cg_event.post(CGEventTapLocation::HID);
+        }
+        (start_x, start_y)
     }
 }
